@@ -9,6 +9,7 @@ vim.g.mapleader = " "
 -------------------------------------------------------------------------------
 local opt = vim.opt
 
+opt.clipboard = "unnamedplus"
 opt.termguicolors = true
 -- never ever folding
 opt.foldenable = false
@@ -50,9 +51,9 @@ opt.wildmode = "list:longest"
 -- don't suggest files like there:
 opt.wildignore = ".hg,.svn,*~,*.png,*.jpg,*.gif,*.min.js,*.swp,*.o,vendor,dist,_site"
 -- tabs: go big or go home
-opt.shiftwidth = 8
-opt.softtabstop = 8
-opt.tabstop = 8
+opt.shiftwidth = 2
+opt.softtabstop = 2
+opt.tabstop = 2
 opt.expandtab = false
 -- case-insensitive search/replace
 opt.ignorecase = true
@@ -384,6 +385,8 @@ require("lazy").setup({
 		"neovim/nvim-lspconfig",
 		config = function()
 			-- Setup language servers.
+			vim.lsp.enable("dartls")
+			vim.lsp.enable("gopls")
 
 			-- Bash LSP
 			--if vim.fn.executable("bash-language-server") == 1 then
@@ -494,6 +497,56 @@ require("lazy").setup({
 			})
 		end,
 	},
+	-- Formatting
+	{
+		"stevearc/conform.nvim",
+		event = { "BufWritePre" },
+		cmd = { "ConformInfo" },
+		-- This will provide type hinting with LuaLS
+		---@module "conform"
+		---@type conform.setupOpts
+		opts = {
+			-- Define your formatters
+			formatters_by_ft = {
+				lua = { "stylua" },
+				python = { "isort", "black" },
+				javascript = { "prettierd", "prettier", stop_after_first = true },
+				dart = { "dart_format" },
+			},
+			-- Set default options
+			default_format_opts = {
+				lsp_format = "fallback",
+			},
+			-- Set up format-on-save
+			format_on_save = { timeout_ms = 500 },
+			-- Customize formatters
+			formatters = {},
+		},
+		init = function()
+			-- If you want the formatexpr, here is the place to set it
+			vim.o.formatexpr = "v:lua.require'conform'.formatexpr()"
+		end,
+	},
+	{
+		"kdheepak/lazygit.nvim",
+		lazy = true,
+		cmd = {
+			"LazyGit",
+			"LazyGitConfig",
+			"LazyGitCurrentFile",
+			"LazyGitFilter",
+			"LazyGitFilterCurrentFile",
+		},
+		-- optional for floating window border decoration
+		dependencies = {
+			"nvim-lua/plenary.nvim",
+		},
+		-- setting the keybinding for LazyGit with 'keys' is recommended in
+		-- order to load the plugin when the command is run for the first time
+		keys = {
+			{ "<leader>lg", "<cmd>LazyGit<cr>", desc = "LazyGit" },
+		},
+	},
 	-- inline function signatures
 	{
 		"ray-x/lsp_signature.nvim",
@@ -513,6 +566,7 @@ require("lazy").setup({
 		"nvim-treesitter/nvim-treesitter",
 		build = ":TSUpdate",
 		lazy = false,
+		branch = "main",
 		config = function()
 			local treesitter = require("nvim-treesitter")
 
@@ -523,6 +577,12 @@ require("lazy").setup({
 				},
 				indent = { enable = true },
 			})
+			-- local alreadyInstalled = treesitter.get_installed()
+			-- local parsersToInstall = vim.iter(filetypes)
+			-- 	:filter(function(p)
+			-- 		return not vim.tbl_contains(alreadyInstalled, p)
+			-- 	end)
+			-- 	:totable()
 			treesitter.install(filetypes)
 		end,
 
